@@ -20,11 +20,14 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 ```
 - Then run the CH32Fun install script from the /misc subfolder
 ```
+cd misc
 .\install_xpack_gcc.ps1
 ```
+(press y to confirm to add xpack to the user PATH environment variable) 
 
 - To test, build any example by changing to the examples directory
 ```
+cd ..\examples\blink (e.g.)
 make
 ```
 
