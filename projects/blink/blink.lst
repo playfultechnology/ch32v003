@@ -5,12 +5,12 @@ blink.elf:     file format elf32-littleriscv
 Disassembly of section .init:
 
 00000000 <InterruptVector>:
-void handle_reset( void ) __attribute__((section(".text.handle_reset")));
+	void InterruptVectorDefault()  __attribute__((naked)) __attribute((section(".init"))) __attribute((naked));
 
-void InterruptVectorDefault( void )
-{
-#if !defined(FUNCONF_TINYVECTOR) || !FUNCONF_TINYVECTOR
-	asm volatile( DEFAULT_INTERRUPT_VECTOR_CONTENTS );
+	void InterruptVectorDefault( void )
+	{
+		#if !defined(FUNCONF_TINYVECTOR) || !FUNCONF_TINYVECTOR
+			asm volatile( DEFAULT_INTERRUPT_VECTOR_CONTENTS );
    0:	1140006f          	j	114 <handle_reset>
    4:	00000000          	.word	0x00000000
    8:	000001cc          	.word	0x000001cc
@@ -103,7 +103,7 @@ void DelaySysTick( uint32_t n )
   fa:	e000f6b7          	lui	a3,0xe000f
   fe:	4698                	lw	a4,8(a3)
  100:	0016e7b7          	lui	a5,0x16e
- 104:	36078793          	addi	a5,a5,864 # 16e360 <blink.c.bf5d90e4+0x16c2b9>
+ 104:	36078793          	addi	a5,a5,864 # 16e360 <blink.c.a0dd551b+0x16c20e>
  108:	973e                	add	a4,a4,a5
 	while( ((int32_t)( SysTick->CNT - targend )) < 0 );
  10a:	469c                	lw	a5,8(a3)
@@ -123,13 +123,12 @@ void DelaySysTick( uint32_t n )
  118:	2e818193          	addi	gp,gp,744 # 200003fc <__global_pointer$>
  11c:	40418113          	addi	sp,gp,1028 # 20000800 <_eusrstack>
  120:	6509                	lui	a0,0x2
- 122:	88050513          	addi	a0,a0,-1920 # 1880 <ch32fun.c.7f2c0c53+0x887>
+ 122:	88050513          	addi	a0,a0,-1920 # 1880 <ch32fun.c.91fdfb68+0x887>
  126:	30051073          	csrw	mstatus,a0
- 12a:	468d                	li	a3,3
- 12c:	00000517          	auipc	a0,0x0
- 130:	ed450513          	addi	a0,a0,-300 # 0 <InterruptVector>
- 134:	8d55                	or	a0,a0,a3
- 136:	30551073          	csrw	mtvec,a0
+ 12a:	00000697          	auipc	a3,0x0
+ 12e:	ed668693          	addi	a3,a3,-298 # 0 <InterruptVector>
+ 132:	0036e693          	ori	a3,a3,3
+ 136:	30569073          	csrw	mtvec,a3
 asm volatile(
  13a:	c0418513          	addi	a0,gp,-1020 # 20000000 <_data_vma>
  13e:	c0418593          	addi	a1,gp,-1020 # 20000000 <_data_vma>
@@ -215,17 +214,17 @@ static inline uint32_t __get_MTVAL(void)
  1d8:	c71c                	sw	a5,8(a4)
 
 000001da <SystemInit>:
-	#endif
-#elif defined(CH32X03x)
-	FLASH->ACTLR = FLASH_ACTLR_LATENCY_2;                   // +2 Cycle Latency (Recommended per TRM)
-#elif defined(CH32V003)
+//#define BASE_CTLR	(((FUNCONF_HSITRIM) << 3) | HSEBYP | RCC_CSS)	// disable HSI in HSE modes
+
+	// Flash latency settings.
+#if defined(CH32V003)
 	#if FUNCONF_SYSTEM_CORE_CLOCK > 25000000
 		FLASH->ACTLR = FLASH_ACTLR_LATENCY_1;               // +1 Cycle Latency
  1da:	400227b7          	lui	a5,0x40022
  1de:	4705                	li	a4,1
  1e0:	c398                	sw	a4,0(a5)
 #elif defined(FUNCONF_USE_HSI) && FUNCONF_USE_HSI
-	#if defined(CH32V30x) || defined(CH32V20x) || defined(CH32V10x)
+	#if defined(CH32V30x) || defined(CH32V20x) || defined(CH32L103) || defined(CH32V10x)
 		EXTEN->EXTEN_CTR |= EXTEN_PLL_HSI_PRE;
 	#endif
 	#if defined(FUNCONF_USE_PLL) && FUNCONF_USE_PLL
@@ -236,23 +235,26 @@ static inline uint32_t __get_MTVAL(void)
 		RCC->CFGR0 = BASE_CFGR0;
  1ea:	0007a223          	sw	zero,4(a5) # 40021004 <_eusrstack+0x20020804>
 		RCC->CTLR  = BASE_CTLR | RCC_HSION | RCC_PLLON; 			// Use HSI, enable PLL.
- 1ee:	08170713          	addi	a4,a4,129 # 1080081 <blink.c.bf5d90e4+0x107dfda>
+ 1ee:	08170713          	addi	a4,a4,129 # 1080081 <blink.c.a0dd551b+0x107df2f>
  1f2:	c398                	sw	a4,0(a5)
-		FLASH->ACTLR = FLASH_ACTLR_LATENCY_1;       		// +1 Cycle Latency
+		FLASH->ACTLR = FLASH_ACTLR_LATENCY_0;
 	#endif
 #endif
 
-#if !defined(CH57x) && !defined(CH58x) && !defined(CH59x)
+#ifndef CH5xx
 	RCC->INTR  = 0x009F0000;                               // Clear PLL, CSSC, HSE, HSI and LSI ready flags.
  1f4:	009f0737          	lui	a4,0x9f0
  1f8:	c798                	sw	a4,8(a5)
 #endif
 
-#if defined(FUNCONF_USE_PLL) && FUNCONF_USE_PLL && !defined(CH57x) && !defined(CH58x) && !defined(CH59x)
-	while((RCC->CTLR & RCC_PLLRDY) == 0);                       	// Wait till PLL is ready
+#if defined(FUNCONF_USE_PLL) && FUNCONF_USE_PLL && !defined(CH5xx)
+	while((RCC->CTLR & RCC_PLLRDY) == 0) {};                       	// Wait till PLL is ready
  1fa:	4398                	lw	a4,0(a5)
  1fc:	00671693          	slli	a3,a4,0x6
  200:	fe06dde3          	bgez	a3,1fa <SystemInit+0x20>
+	#if defined(CH32H41x)
+		RCC->PLLCFGR |= RCC_SYSPLL_GATE;
+	#endif
 	uint32_t tmp32 = RCC->CFGR0 & ~(0x03);							// clr the SW
  204:	43d8                	lw	a4,4(a5)
 	RCC->CFGR0 = tmp32 | RCC_SW_PLL;                       			// Select PLL as system clock source
@@ -274,10 +276,10 @@ static inline uint32_t __get_MTVAL(void)
 	*DMDATA0 = 0x80;
  224:	08000713          	li	a4,128
  228:	0ee7aa23          	sw	a4,244(a5)
-	SetupUART( UART_BRR );
-#endif
-#if defined( FUNCONF_USE_DEBUGPRINTF ) && FUNCONF_USE_DEBUGPRINTF
 	SetupDebugPrintf();
+#endif
+#if defined(FUNCONF_SUPPORT_CONSTRUCTORS) && FUNCONF_SUPPORT_CONSTRUCTORS
+	CallConstructors();
 #endif
 }
  22c:	8082                	ret
