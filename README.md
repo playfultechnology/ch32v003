@@ -2,6 +2,22 @@
 Notes and code for CH32V003 RISC-V board from WCH. There is an Arduino boards definition available at https://github.com/openwch/board_manager_files/raw/main/package_ch32v_index.json but I had problems getting it to work, so instead I'm using the lightweight CH32Fun IDE instead.
 
 ## Hardware
+
+There are various versions of the CH32V003 available, with different numbers of (available) pins. The two most common variants are:
+
+#### CH32V003J4M6
+ - 8 pin, SOP
+This is the simplest, cheapest variant. Note that many of the GPIO pins are bridged between several different functions.
+![CH32V003J4M6](docs/CH32V003J4M6.jpg)
+
+#### CH32V003F4P6
+ - 20 pin, TSSOP
+This is more feature-rich, but also an absolute bugger to solder.
+![CH32V003F4P6](docs/CH32V003F4P6.jpg)
+
+To facilitate easier use of the CH32V003F4P6, it is possible to buy devboards based on it:
+![CH32V003F4P6 Dev Board](docs/CH32V003F4P6-devboard.jpg)
+ 
  - 1x CH32v003 devboard
  - 1x WCH-LinkE programmer
 Both available at https://s.click.aliexpress.com/e/_oEjnd7A
